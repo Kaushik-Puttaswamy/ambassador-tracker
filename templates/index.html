@@ -6,17 +6,22 @@
   <script src="/static/script.js" defer></script>
   <style>
     table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    input { width: 40px; text-align: center; }
+    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    input { width: 40px; text-align: center; margin: 2px; }
     .green { background-color: #90ee90; }
     .yellow { background-color: #ffff99; }
     .orange { background-color: #ffcc80; }
     .red { background-color: #ff9999; }
     .scrollable { overflow-x: auto; display: block; }
+    #control-panel { margin-bottom: 10px; }
   </style>
 </head>
 <body>
   <h2>Brand Ambassador Tracker</h2>
+  <div id="control-panel">
+    <input type="text" id="new-ambassador" placeholder="New Ambassador Name">
+    <button id="add-ambassador-btn">Add Ambassador</button>
+  </div>
   <div class="scrollable">
     <table id="tracker-table">
       <thead>
@@ -28,19 +33,21 @@
         </tr>
       </thead>
       <tbody>
-        {% for name in ['John', 'Alice'] %}
+        {% for name, weeks in data.items() %}
           <tr>
             <td>{{ name }}</td>
-            {% for week in range(1, 3) %}
+            {% for week_num in range(1, 3) %}
               <td>
-                {% for opt in range(1, 6) %}
-                  Opt{{ opt }}:
+                {% for opt in range(5) %}
+                  Opt{{ opt+1 }}:
                   <input type="text"
+                         value="{{ weeks['Week ' ~ week_num][opt] if 'Week ' ~ week_num in weeks else '' }}"
                          data-ambassador="{{ name }}"
-                         data-week="{{ week }}"
-                         data-option="{{ opt }}"
+                         data-week="{{ week_num }}"
+                         data-option="{{ opt+1 }}"
                          maxlength="1"
                          oninput="updateColor(this)">
+                  <br>
                 {% endfor %}
               </td>
             {% endfor %}
