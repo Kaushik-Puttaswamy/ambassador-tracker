@@ -7,7 +7,7 @@
   <style>
     table { border-collapse: collapse; width: 100%; }
     td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    input { width: 40px; text-align: center; margin: 2px; }
+    button.opt-btn { width: 60px; margin: 2px; }
     .green { background-color: #90ee90; }
     .yellow { background-color: #ffff99; }
     .orange { background-color: #ffcc80; }
@@ -21,7 +21,13 @@
   <div id="control-panel">
     <input type="text" id="new-ambassador" placeholder="New Ambassador Name">
     <button id="add-ambassador-btn">Add Ambassador</button>
+    <form action="/upload" method="post" enctype="multipart/form-data" style="display:inline;">
+      <input type="file" name="excel_file">
+      <button type="submit">Upload Excel</button>
+    </form>
+    <a href="/download"><button>Download Excel</button></a>
   </div>
+
   <div class="scrollable">
     <table id="tracker-table">
       <thead>
@@ -38,16 +44,16 @@
             <td>{{ name }}</td>
             {% for week_num in range(1, 3) %}
               <td>
+                {% set week_label = 'Week ' ~ week_num %}
                 {% for opt in range(5) %}
                   Opt{{ opt+1 }}:
-                  <input type="text"
-                         value="{{ weeks['Week ' ~ week_num][opt] if 'Week ' ~ week_num in weeks else '' }}"
-                         data-ambassador="{{ name }}"
-                         data-week="{{ week_num }}"
-                         data-option="{{ opt+1 }}"
-                         maxlength="1"
-                         oninput="updateColor(this)">
-                  <br>
+                  <button class="opt-btn"
+                          data-ambassador="{{ name }}"
+                          data-week="{{ week_num }}"
+                          data-option="{{ opt+1 }}"
+                          onclick="incrementCount(this)">
+                    {{ weeks[week_label][opt] if week_label in weeks else 0 }}
+                  </button><br>
                 {% endfor %}
               </td>
             {% endfor %}
