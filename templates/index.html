@@ -5,6 +5,8 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/static/script.js" defer></script>
   <style>
+    body { font-family: Arial, sans-serif; }
+    h2 { text-align: center; }
     table { border-collapse: collapse; width: 100%; }
     td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
     .opt-btn, .reset-btn { width: 60px; margin: 2px; }
@@ -14,11 +16,13 @@
     .orange { background-color: #ffcc80; }
     .red { background-color: #ff9999; }
     .scrollable { overflow-x: auto; display: block; }
-    #control-panel { margin-bottom: 10px; }
+    #control-panel { margin-bottom: 10px; text-align: center; }
+    .filter-select { margin: 4px; }
   </style>
 </head>
 <body>
   <h2>Brand Ambassador Tracker</h2>
+
   <div id="control-panel">
     <input type="text" id="new-ambassador" placeholder="New Ambassador Name">
     <button id="add-ambassador-btn">Add Ambassador</button>
@@ -36,24 +40,34 @@
       <thead>
         <tr>
           <th>Ambassador</th>
-          {% for w in range(1, 3) %}
-            <th class="week-header">Week {{ w }}</th>
+          {% for week in weeks %}
+            <th class="week-header">{{ week }}</th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
-        {% for name, weeks in data.items() %}
+        {% for name, weeks_data in data.items() %}
           <tr>
             <td>{{ name }}</td>
-            {% for week, options in weeks.items() %}
+            {% for week in weeks %}
               <td>
-                {% for opt in range(5) %}
-                  Opt{{ opt+1 }}:
-                  <button class="opt-btn" data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" onclick="incrementCount(this)">
-                    {{ options[opt] }}
-                  </button>
-                  <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
-                {% endfor %}
+                {% if week in weeks_data %}
+                  {% for opt in range(5) %}
+                    Opt{{ opt+1 }}:
+                    <button class="opt-btn {{ ['','green','yellow','orange','red'][weeks_data[week][opt]] if weeks_data[week][opt] <= 4 else 'red' }}" 
+                            data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" 
+                            onclick="incrementCount(this)">
+                      {{ weeks_data[week][opt] }}
+                    </button>
+                    <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
+                  {% endfor %}
+                {% else %}
+                  {% for opt in range(5) %}
+                    Opt{{ opt+1 }}:
+                    <button class="opt-btn" data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" onclick="incrementCount(this)">0</button>
+                    <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
+                  {% endfor %}
+                {% endif %}
               </td>
             {% endfor %}
           </tr>
