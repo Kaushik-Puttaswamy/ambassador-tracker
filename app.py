@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request, send_file, redirect, jsonify
 from flask_socketio import SocketIO, emit
 import os
@@ -69,7 +68,7 @@ def manual_save():
 @socketio.on('update_click')
 def update_click(payload):
     name = payload['ambassador']
-    week = f"Week {payload['week']}"
+    week = payload['week']
     option = payload['option'] - 1
     count = payload['count']
 
