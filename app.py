@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, render_template, request, send_file, redirect
+from flask import Flask, render_template, request, send_file, redirect, jsonify
 from flask_socketio import SocketIO, emit
 import os
 import json
@@ -11,7 +11,6 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 DATA_FILE = 'saved_data.json'
 
-# Load saved data or initialize new structure
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
@@ -37,7 +36,6 @@ def download():
             for i, val in enumerate(options):
                 row[f'Opt{i+1}'] = val
             rows.append(row)
-
     df = pd.DataFrame(rows)
     output = BytesIO()
     df.to_excel(output, index=False)
@@ -62,6 +60,12 @@ def upload():
         save_data(data)
     return redirect('/')
 
+@app.route('/save', methods=['POST'])
+def manual_save():
+    global data
+    save_data(data)
+    return jsonify({'status': 'saved'})
+
 @socketio.on('update_click')
 def update_click(payload):
     name = payload['ambassador']
@@ -75,8 +79,6 @@ def update_click(payload):
         data[name][week] = [0] * 5
 
     data[name][week][option] = count
-    save_data(data)
-
     emit('broadcast_update', payload, broadcast=True)
 
 if __name__ == '__main__':

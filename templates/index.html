@@ -7,7 +7,8 @@
   <style>
     table { border-collapse: collapse; width: 100%; }
     td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    button.opt-btn { width: 60px; margin: 2px; }
+    .opt-btn, .reset-btn { width: 60px; margin: 2px; }
+    .reset-btn { width: 30px; background-color: #eee; }
     .green { background-color: #90ee90; }
     .yellow { background-color: #ffff99; }
     .orange { background-color: #ffcc80; }
@@ -20,12 +21,14 @@
   <h2>Brand Ambassador Tracker</h2>
   <div id="control-panel">
     <input type="text" id="new-ambassador" placeholder="New Ambassador Name">
+    <input type="number" id="week-count" placeholder="Number of Weeks" value="2" min="1">
     <button id="add-ambassador-btn">Add Ambassador</button>
     <form action="/upload" method="post" enctype="multipart/form-data" style="display:inline;">
       <input type="file" name="excel_file">
       <button type="submit">Upload Excel</button>
     </form>
     <a href="/download"><button>Download Excel</button></a>
+    <button id="save-btn">Save</button>
   </div>
 
   <div class="scrollable">
@@ -53,7 +56,8 @@
                           data-option="{{ opt+1 }}"
                           onclick="incrementCount(this)">
                     {{ weeks[week_label][opt] if week_label in weeks else 0 }}
-                  </button><br>
+                  </button>
+                  <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
                 {% endfor %}
               </td>
             {% endfor %}
