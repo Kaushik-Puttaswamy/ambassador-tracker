@@ -1,59 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Ambassador Tracker</title>
-  <link rel="stylesheet" href="/static/style.css" />
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <title>Brand Ambassador Tracker</title>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/static/script.js" defer></script>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    h2 { text-align: center; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    .opt-btn, .reset-btn { width: 60px; margin: 2px; }
+    .reset-btn { width: 30px; background-color: #eee; }
+    .green { background-color: #90ee90; }
+    .yellow { background-color: #ffff99; }
+    .orange { background-color: #ffcc80; }
+    .red { background-color: #ff9999; }
+    .scrollable { overflow-x: auto; display: block; }
+    #control-panel { margin-bottom: 10px; text-align: center; }
+    .filter-select { margin: 4px; }
+  </style>
 </head>
 <body>
-  <h1>Ambassador Activity Tracker</h1>
+  <h2>Brand Ambassador Tracker</h2>
 
-  <div class="controls">
-    <input type="text" id="new-ambassador" placeholder="New Ambassador Name" />
+  <div id="control-panel">
+    <input type="text" id="new-ambassador" placeholder="New Ambassador Name">
     <button id="add-ambassador-btn">Add Ambassador</button>
-    <button id="add-week-btn">Add Week</button>
-    <button id="save-btn">💾 Save</button>
+    <button id="add-week-btn">Add Week Column</button>
+    <form action="/upload" method="post" enctype="multipart/form-data" style="display:inline;">
+      <input type="file" name="excel_file">
+      <button type="submit">Upload Excel</button>
+    </form>
+    <a href="/download"><button>Download Excel</button></a>
+    <button id="save-btn">Save</button>
   </div>
 
-  <table id="tracker-table">
-    <thead>
-      <tr>
-        <th>Ambassador</th>
-        {% for week in weeks %}
-        <th class="week-header">
-          <span contenteditable="true" class="editable">{{ week }}</span>
-          <button onclick="deleteWeek(this)">🗑</button>
-        </th>
-        {% endfor %}
-      </tr>
-      <!-- filter row is inserted dynamically via JS -->
-    </thead>
-    <tbody>
-      {% for name, data in ambassadors.items() %}
-      <tr>
-        <td>
-          <span contenteditable="true" class="editable">{{ name }}</span>
-          <button onclick="deleteAmbassador(this)">🗑</button>
-        </td>
-        {% for week in weeks %}
-        <td>
-          {% for opt in range(1, 6) %}
-          Opt{{ opt }}:
-          <button class="opt-btn {{ get_color_class(data[week][opt]) }}" 
-                  data-ambassador="{{ name }}" 
-                  data-week="{{ week }}" 
-                  data-option="{{ opt }}">{{ data[week][opt] }}</button>
-          <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">&#x27f3;</button>
-          <br />
+  <div class="scrollable">
+    <table id="tracker-table">
+      <thead>
+        <tr>
+          <th>Ambassador</th>
+          {% for week in weeks %}
+            <th class="week-header">{{ week }}</th>
           {% endfor %}
-        </td>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, weeks_data in data.items() %}
+          <tr>
+            <td>{{ name }}</td>
+            {% for week in weeks %}
+              <td>
+                {% if week in weeks_data %}
+                  {% for opt in range(5) %}
+                    Opt{{ opt+1 }}:
+                    <button class="opt-btn {{ ['','green','yellow','orange','red'][weeks_data[week][opt]] if weeks_data[week][opt] <= 4 else 'red' }}" 
+                            data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" 
+                            onclick="incrementCount(this)">
+                      {{ weeks_data[week][opt] }}
+                    </button>
+                    <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
+                  {% endfor %}
+                {% else %}
+                  {% for opt in range(5) %}
+                    Opt{{ opt+1 }}:
+                    <button class="opt-btn" data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" onclick="incrementCount(this)">0</button>
+                    <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
+                  {% endfor %}
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
         {% endfor %}
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <script src="/static/script.js"></script>
+      </tbody>
+    </table>
+  </div>
 </body>
 </html>
