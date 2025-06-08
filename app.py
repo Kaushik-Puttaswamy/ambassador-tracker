@@ -1,3 +1,5 @@
+# app.py
+
 from flask import Flask, render_template, request, send_file, redirect, jsonify
 from flask_socketio import SocketIO, emit
 import os
@@ -24,6 +26,7 @@ store = load_data()
 
 @app.route('/')
 def index():
+    store['weeks'] = sorted(set(store['weeks']))  # ensure no duplicates
     return render_template('index.html', data=store['data'], weeks=store['weeks'])
 
 @app.route('/download')
@@ -57,7 +60,7 @@ def upload():
             new_data[name][week] = opts
             weeks_set.add(week)
         store['data'] = new_data
-        store['weeks'] = list(weeks_set)
+        store['weeks'] = sorted(list(weeks_set))
         save_data(store)
     return redirect('/')
 
@@ -79,45 +82,12 @@ def update_click(payload):
         store['data'][name][week] = [0] * 5
 
     store['data'][name][week][option] = count
+
     if week not in store['weeks']:
         store['weeks'].append(week)
+        store['weeks'] = sorted(set(store['weeks']))  # deduplicate
+
     emit('broadcast_update', payload, broadcast=True)
-
-@socketio.on('delete_ambassador')
-def delete_ambassador(data):
-    name = data['ambassador']
-    if name in store['data']:
-        del store['data'][name]
-        emit('ambassador_deleted', {'ambassador': name}, broadcast=True)
-
-@socketio.on('delete_week')
-def delete_week(data):
-    week = data['week']
-    if week in store['weeks']:
-        store['weeks'].remove(week)
-        for ambassador in store['data']:
-            store['data'][ambassador].pop(week, None)
-        emit('week_deleted', {'week': week}, broadcast=True)
-
-@socketio.on('rename_ambassador')
-def rename_ambassador(data):
-    old_name = data['old_name']
-    new_name = data['new_name']
-    if old_name in store['data']:
-        store['data'][new_name] = store['data'].pop(old_name)
-        emit('ambassador_renamed', {'old_name': old_name, 'new_name': new_name}, broadcast=True)
-
-@socketio.on('rename_week')
-def rename_week(data):
-    old_week = data['old_week']
-    new_week = data['new_week']
-    if old_week in store['weeks']:
-        index = store['weeks'].index(old_week)
-        store['weeks'][index] = new_week
-        for ambassador in store['data']:
-            if old_week in store['data'][ambassador]:
-                store['data'][ambassador][new_week] = store['data'][ambassador].pop(old_week)
-        emit('week_renamed', {'old_week': old_week, 'new_week': new_week}, broadcast=True)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

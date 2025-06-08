@@ -1,4 +1,3 @@
-// static/script.js
 const socket = io();
 
 function getColorClass(count) {
@@ -46,27 +45,11 @@ document.getElementById("add-ambassador-btn").addEventListener("click", () => {
   const name = document.getElementById("new-ambassador").value.trim();
   if (!name) return;
 
-  const weeks = Array.from(document.querySelectorAll(".week-header")).map(th => th.textContent);
+  const weeks = Array.from(document.querySelectorAll(".week-header .week-name")).map(span => span.textContent);
   const tbody = document.querySelector("#tracker-table tbody");
   const tr = document.createElement("tr");
   const tdName = document.createElement("td");
-
-  const nameSpan = document.createElement("span");
-  nameSpan.className = "ambassador-name";
-  nameSpan.textContent = name;
-
-  const editBtn = document.createElement("button");
-  editBtn.textContent = "✏️";
-  editBtn.onclick = () => renameAmbassador(editBtn);
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️";
-  deleteBtn.onclick = () => deleteAmbassador(deleteBtn);
-
-  tdName.appendChild(nameSpan);
-  tdName.appendChild(editBtn);
-  tdName.appendChild(deleteBtn);
-
+  tdName.innerHTML = `<span class="ambassador-name">${name}</span><span class="edit-icon" onclick="editAmbassadorName(this)">✏️</span><span class="delete-icon" onclick="deleteAmbassadorRow(this)">🗑️</span>`;
   tr.appendChild(tdName);
 
   weeks.forEach(week => {
@@ -103,25 +86,12 @@ document.getElementById("add-week-btn").addEventListener("click", () => {
   const theadRow = document.querySelector("#tracker-table thead tr");
   const th = document.createElement("th");
   th.className = "week-header";
-  const container = document.createElement("div");
-  container.className = "week-header-container";
-  const span = document.createElement("span");
-  span.textContent = weekName;
-  const renameBtn = document.createElement("button");
-  renameBtn.textContent = "✏️";
-  renameBtn.onclick = () => renameWeek(weekName);
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑️";
-  deleteBtn.onclick = () => deleteWeek(weekName);
-  container.appendChild(span);
-  container.appendChild(renameBtn);
-  container.appendChild(deleteBtn);
-  th.appendChild(container);
+  th.innerHTML = `<span class="week-name">${weekName}</span><span class="edit-icon" onclick="editWeekName(this)">✏️</span><span class="delete-icon" onclick="deleteWeekColumn(this)">🗑️</span>`;
   theadRow.appendChild(th);
 
   const rows = document.querySelectorAll("#tracker-table tbody tr");
   rows.forEach(row => {
-    const name = row.firstChild.querySelector(".ambassador-name").textContent;
+    const name = row.querySelector(".ambassador-name").textContent;
     const td = document.createElement("td");
     for (let opt = 1; opt <= 5; opt++) {
       const label = document.createTextNode(`Opt${opt}:`);
@@ -151,57 +121,47 @@ document.getElementById("save-btn").addEventListener("click", () => {
   });
 });
 
-function filterAmbassadors(query) {
-  const rows = document.querySelectorAll("#tracker-table tbody tr");
-  query = query.toLowerCase();
-  rows.forEach(row => {
-    const name = row.firstChild.querySelector(".ambassador-name").textContent.toLowerCase();
-    row.style.display = name.includes(query) ? "" : "none";
-  });
+function editAmbassadorName(icon) {
+  const span = icon.parentElement.querySelector(".ambassador-name");
+  const newName = prompt("Enter new name:", span.textContent);
+  if (newName) {
+    const oldName = span.textContent;
+    span.textContent = newName;
+    const buttons = document.querySelectorAll(`button[data-ambassador="${oldName}"]`);
+    buttons.forEach(btn => btn.dataset.ambassador = newName);
+  }
 }
 
-function renameAmbassador(button) {
-  const td = button.parentElement;
-  const span = td.querySelector(".ambassador-name");
+function deleteAmbassadorRow(icon) {
+  const row = icon.closest("tr");
+  row.remove();
+}
+
+function editWeekName(icon) {
+  const span = icon.parentElement.querySelector(".week-name");
   const oldName = span.textContent;
-  const newName = prompt("Enter new name:", oldName);
+  const newName = prompt("Enter new week name:", oldName);
   if (newName && newName !== oldName) {
     span.textContent = newName;
-    document.querySelectorAll(`[data-ambassador="${oldName}"]`).forEach(btn => {
-      btn.dataset.ambassador = newName;
-    });
+    const buttons = document.querySelectorAll(`button[data-week="${oldName}"]`);
+    buttons.forEach(btn => btn.dataset.week = newName);
   }
 }
 
-function deleteAmbassador(button) {
-  const tr = button.closest("tr");
-  if (confirm("Are you sure to delete this ambassador?")) {
-    tr.remove();
-  }
-}
-
-function renameWeek(oldName) {
-  const newName = prompt("Enter new week name:", oldName);
-  if (!newName || newName === oldName) return;
-
-  document.querySelectorAll(`.week-header`).forEach(th => {
-    if (th.textContent.includes(oldName)) th.querySelector("span").textContent = newName;
-  });
-
-  document.querySelectorAll(`[data-week="${oldName}"]`).forEach(btn => {
-    btn.dataset.week = newName;
+function deleteWeekColumn(icon) {
+  const th = icon.closest("th");
+  const index = Array.from(th.parentNode.children).indexOf(th);
+  const rows = document.querySelectorAll("#tracker-table tr");
+  rows.forEach(row => {
+    if (row.children[index]) row.removeChild(row.children[index]);
   });
 }
 
-function deleteWeek(weekName) {
-  const headers = document.querySelectorAll(".week-header");
-  let index = -1;
-  headers.forEach((th, i) => {
-    if (th.textContent.includes(weekName)) index = i + 1;
+document.getElementById("ambassador-filter").addEventListener("input", (e) => {
+  const filter = e.target.value.toLowerCase();
+  const rows = document.querySelectorAll("#tracker-table tbody tr");
+  rows.forEach(row => {
+    const name = row.querySelector(".ambassador-name").textContent.toLowerCase();
+    row.style.display = name.includes(filter) ? "" : "none";
   });
-  if (index === -1) return;
-  if (confirm(`Are you sure to delete ${weekName}?`)) {
-    headers[index - 1].remove();
-    document.querySelectorAll("#tracker-table tbody tr").forEach(row => row.children[index].remove());
-  }
-}
+});
