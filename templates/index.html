@@ -7,19 +7,19 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     h2 { text-align: center; margin: 20px 0; }
-    table { border-collapse: collapse; width: 100%; min-width: 1200px; }
-    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; vertical-align: top; }
     .opt-btn, .reset-btn { width: 60px; margin: 2px; }
     .reset-btn { width: 30px; background-color: #eee; }
     .green { background-color: #90ee90; }
     .yellow { background-color: #ffff99; }
     .orange { background-color: #ffcc80; }
     .red { background-color: #ff9999; }
-    .scrollable { overflow: auto; max-height: 90vh; max-width: 100vw; }
-    #control-panel { margin-bottom: 10px; text-align: center; }
+    .scrollable { overflow-x: auto; overflow-y: auto; max-height: 80vh; display: block; }
+    #control-panel { margin: 10px; text-align: center; position: sticky; top: 0; background-color: white; padding: 10px; z-index: 10; }
     .filter-select { margin: 4px; }
-    .edit-btn, .delete-btn { margin-left: 5px; cursor: pointer; }
-    .ambassador-filter { width: 200px; margin-left: 10px; }
+    .action-icon { cursor: pointer; margin-left: 5px; color: blue; }
+    .ambassador-name { display: flex; align-items: center; justify-content: center; gap: 5px; }
   </style>
 </head>
 <body>
@@ -35,11 +35,8 @@
     </form>
     <a href="/download"><button>Download Excel</button></a>
     <button id="save-btn">Save</button>
-    <select id="ambassador-filter" class="ambassador-filter">
-      <option value="">All Ambassadors</option>
-      {% for name in data.keys() %}
-        <option value="{{ name }}">{{ name }}</option>
-      {% endfor %}
+    <select id="ambassador-filter" class="filter-select">
+      <option value="">Filter Ambassador</option>
     </select>
   </div>
 
@@ -50,19 +47,21 @@
           <th>Ambassador</th>
           {% for week in weeks %}
             <th class="week-header">{{ week }}
-              <span class="edit-btn" onclick="editWeek(this, '{{ week }}')">✏️</span>
-              <span class="delete-btn" onclick="deleteWeek(this, '{{ week }}')">🗑️</span>
+              <span class="action-icon" onclick="editWeek(this, '{{ week }}')">✏️</span>
+              <span class="action-icon" onclick="deleteWeek(this, '{{ week }}')">🗑️</span>
             </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% for name, weeks_data in data.items() %}
-          <tr data-name="{{ name }}">
+          <tr>
             <td>
-              <span class="ambassador-name">{{ name }}</span>
-              <span class="edit-btn" onclick="editAmbassador(this)">✏️</span>
-              <span class="delete-btn" onclick="deleteAmbassador(this)">🗑️</span>
+              <div class="ambassador-name">
+                <span class="amb-name-text">{{ name }}</span>
+                <span class="action-icon" onclick="editAmbassador(this, '{{ name }}')">✏️</span>
+                <span class="action-icon" onclick="deleteAmbassador(this, '{{ name }}')">🗑️</span>
+              </div>
             </td>
             {% for week in weeks %}
               <td>
@@ -71,9 +70,7 @@
                     Opt{{ opt+1 }}:
                     <button class="opt-btn {{ ['','green','yellow','orange','red'][weeks_data[week][opt]] if weeks_data[week][opt] <= 4 else 'red' }}" 
                             data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" 
-                            onclick="incrementCount(this)">
-                      {{ weeks_data[week][opt] }}
-                    </button>
+                            onclick="incrementCount(this)">{{ weeks_data[week][opt] }}</button>
                     <button class="reset-btn" onclick="resetCount(this.previousElementSibling)">⟳</button><br>
                   {% endfor %}
                 {% else %}
