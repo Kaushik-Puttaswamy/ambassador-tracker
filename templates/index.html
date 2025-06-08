@@ -18,17 +18,11 @@
     .scrollable { overflow-x: auto; display: block; }
     #control-panel { margin-bottom: 10px; text-align: center; }
     .filter-select { margin: 4px; }
-    .week-header-container, .ambassador-cell {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+    .edit-icon, .delete-icon {
+      cursor: pointer;
+      margin-left: 5px;
     }
-    .actions-btns button { margin: 2px; }
-    .filter-input { width: 90%; margin-top: 4px; }
-    .ambassador-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -44,46 +38,40 @@
     </form>
     <a href="/download"><button>Download Excel</button></a>
     <button id="save-btn">Save</button>
+    <input type="text" id="ambassador-filter" placeholder="Filter Ambassadors...">
   </div>
 
   <div class="scrollable">
     <table id="tracker-table">
       <thead>
         <tr>
-          <th>Ambassador</th>
+          <th>
+            Ambassador
+          </th>
           {% for week in weeks %}
             <th class="week-header">
-              <div class="week-header-container">
-                <span>{{ week }}</span>
-                <div class="actions-btns">
-                  <button onclick="renameWeek('{{ week }}')">✏️</button>
-                  <button onclick="deleteWeek('{{ week }}')">🗑️</button>
-                </div>
-                <input class="filter-input" onkeyup="applyFilter(this, {{ loop.index0 }})" placeholder="Filter...">
-              </div>
+              <span class="week-name">{{ week }}</span>
+              <span class="edit-icon" onclick="editWeekName(this)">✏️</span>
+              <span class="delete-icon" onclick="deleteWeekColumn(this)">🗑️</span>
             </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% for name, weeks_data in data.items() %}
-          <tr data-ambassador="{{ name }}">
-            <td>
-              <div class="ambassador-cell">
-                <span class="ambassador-name">{{ name }}</span>
-                <div class="actions-btns">
-                  <button onclick="renameAmbassador('{{ name }}')">✏️</button>
-                  <button onclick="deleteAmbassador('{{ name }}')">🗑️</button>
-                </div>
-              </div>
+          <tr>
+            <td class="ambassador-name-cell">
+              <span class="ambassador-name">{{ name }}</span>
+              <span class="edit-icon" onclick="editAmbassadorName(this)">✏️</span>
+              <span class="delete-icon" onclick="deleteAmbassadorRow(this)">🗑️</span>
             </td>
             {% for week in weeks %}
               <td>
                 {% if week in weeks_data %}
                   {% for opt in range(5) %}
                     Opt{{ opt+1 }}:
-                    <button class="opt-btn {{ ['','green','yellow','orange','red'][weeks_data[week][opt]] if weeks_data[week][opt] <= 4 else 'red' }}" 
-                            data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}" 
+                    <button class="opt-btn {{ ['','green','yellow','orange','red'][weeks_data[week][opt]] if weeks_data[week][opt] <= 4 else 'red' }}"
+                            data-ambassador="{{ name }}" data-week="{{ week }}" data-option="{{ opt+1 }}"
                             onclick="incrementCount(this)">
                       {{ weeks_data[week][opt] }}
                     </button>
