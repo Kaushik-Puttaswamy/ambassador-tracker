@@ -5,9 +5,9 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/static/script.js" defer></script>
   <style>
-    body { font-family: Arial, sans-serif; }
-    h2 { text-align: center; }
-    table { border-collapse: collapse; width: 100%; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    h2 { text-align: center; margin: 20px 0; }
+    table { border-collapse: collapse; width: 100%; min-width: 1200px; }
     td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
     .opt-btn, .reset-btn { width: 60px; margin: 2px; }
     .reset-btn { width: 30px; background-color: #eee; }
@@ -15,10 +15,11 @@
     .yellow { background-color: #ffff99; }
     .orange { background-color: #ffcc80; }
     .red { background-color: #ff9999; }
-    .scrollable { overflow-x: auto; display: block; }
+    .scrollable { overflow: auto; max-height: 90vh; max-width: 100vw; }
     #control-panel { margin-bottom: 10px; text-align: center; }
-    .edit-icon, .delete-icon { cursor: pointer; margin-left: 5px; }
-    .filter-input { width: 80%; padding: 4px; margin: 4px auto; display: block; }
+    .filter-select { margin: 4px; }
+    .edit-btn, .delete-btn { margin-left: 5px; cursor: pointer; }
+    .ambassador-filter { width: 200px; margin-left: 10px; }
   </style>
 </head>
 <body>
@@ -34,33 +35,34 @@
     </form>
     <a href="/download"><button>Download Excel</button></a>
     <button id="save-btn">Save</button>
+    <select id="ambassador-filter" class="ambassador-filter">
+      <option value="">All Ambassadors</option>
+      {% for name in data.keys() %}
+        <option value="{{ name }}">{{ name }}</option>
+      {% endfor %}
+    </select>
   </div>
-
-  <input type="text" id="ambassador-filter" class="filter-input" placeholder="Filter by Ambassador name...">
 
   <div class="scrollable">
     <table id="tracker-table">
       <thead>
         <tr>
-          <th>
-            <span class="ambassador-header">Ambassador</span>
-          </th>
+          <th>Ambassador</th>
           {% for week in weeks %}
-            <th class="week-header">
-              <span class="week-name">{{ week }}</span>
-              <span class="edit-icon" onclick="editWeekName(this)">✏️</span>
-              <span class="delete-icon" onclick="deleteWeekColumn(this)">🗑️</span>
+            <th class="week-header">{{ week }}
+              <span class="edit-btn" onclick="editWeek(this, '{{ week }}')">✏️</span>
+              <span class="delete-btn" onclick="deleteWeek(this, '{{ week }}')">🗑️</span>
             </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% for name, weeks_data in data.items() %}
-          <tr>
+          <tr data-name="{{ name }}">
             <td>
               <span class="ambassador-name">{{ name }}</span>
-              <span class="edit-icon" onclick="editAmbassadorName(this)">✏️</span>
-              <span class="delete-icon" onclick="deleteAmbassadorRow(this)">🗑️</span>
+              <span class="edit-btn" onclick="editAmbassador(this)">✏️</span>
+              <span class="delete-btn" onclick="deleteAmbassador(this)">🗑️</span>
             </td>
             {% for week in weeks %}
               <td>

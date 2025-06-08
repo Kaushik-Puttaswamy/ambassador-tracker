@@ -1,3 +1,4 @@
+// static/script.js
 const socket = io();
 
 function getColorClass(count) {
@@ -41,78 +42,117 @@ socket.on("broadcast_update", (data) => {
   }
 });
 
-document.getElementById("add-ambassador-btn").addEventListener("click", () => {
-  const name = document.getElementById("new-ambassador").value.trim();
-  if (!name) return;
+function createOptionButtons(td, name, week) {
+  for (let opt = 1; opt <= 5; opt++) {
+    const label = document.createTextNode(`Opt${opt}:`);
+    const btn = document.createElement("button");
+    btn.textContent = "0";
+    btn.className = "opt-btn";
+    btn.dataset.ambassador = name;
+    btn.dataset.week = week;
+    btn.dataset.option = opt;
+    btn.addEventListener("click", () => incrementCount(btn));
+    const resetBtn = document.createElement("button");
+    resetBtn.textContent = "\u27f3";
+    resetBtn.className = "reset-btn";
+    resetBtn.addEventListener("click", () => resetCount(btn));
+    td.appendChild(label);
+    td.appendChild(btn);
+    td.appendChild(resetBtn);
+    td.appendChild(document.createElement("br"));
+  }
+}
 
-  const weeks = Array.from(document.querySelectorAll(".week-header .week-name")).map(span => span.textContent);
+function addAmbassadorRow(name) {
+  const weeks = Array.from(document.querySelectorAll(".week-header"), th => th.dataset.week);
   const tbody = document.querySelector("#tracker-table tbody");
   const tr = document.createElement("tr");
   const tdName = document.createElement("td");
-  tdName.innerHTML = `<span class="ambassador-name">${name}</span><span class="edit-icon" onclick="editAmbassadorName(this)">✏️</span><span class="delete-icon" onclick="deleteAmbassadorRow(this)">🗑️</span>`;
+  tdName.innerHTML = `<span class="ambassador-name">${name}</span> <button class="edit-btn">✏️</button> <button class="delete-btn">🗑️</button>`;
+  tdName.querySelector(".edit-btn").onclick = () => editAmbassador(tdName);
+  tdName.querySelector(".delete-btn").onclick = () => deleteAmbassador(tr);
   tr.appendChild(tdName);
 
   weeks.forEach(week => {
     const td = document.createElement("td");
-    for (let opt = 1; opt <= 5; opt++) {
-      const label = document.createTextNode(`Opt${opt}:`);
-      const btn = document.createElement("button");
-      btn.textContent = "0";
-      btn.className = "opt-btn";
-      btn.dataset.ambassador = name;
-      btn.dataset.week = week;
-      btn.dataset.option = opt;
-      btn.addEventListener("click", () => incrementCount(btn));
-      const resetBtn = document.createElement("button");
-      resetBtn.textContent = "\u27f3";
-      resetBtn.className = "reset-btn";
-      resetBtn.addEventListener("click", () => resetCount(btn));
-      td.appendChild(label);
-      td.appendChild(btn);
-      td.appendChild(resetBtn);
-      td.appendChild(document.createElement("br"));
-    }
+    createOptionButtons(td, name, week);
     tr.appendChild(td);
   });
 
   tbody.appendChild(tr);
-  document.getElementById("new-ambassador").value = "";
-});
+}
 
-document.getElementById("add-week-btn").addEventListener("click", () => {
-  const weekName = prompt("Enter week name (e.g., Week 3):");
-  if (!weekName) return;
+function editAmbassador(td) {
+  const span = td.querySelector(".ambassador-name");
+  const oldName = span.textContent;
+  const newName = prompt("Edit ambassador name:", oldName);
+  if (!newName || newName === oldName) return;
 
+  document.querySelectorAll(`[data-ambassador="${oldName}"]`).forEach(el => {
+    el.dataset.ambassador = newName;
+  });
+  span.textContent = newName;
+}
+
+function deleteAmbassador(tr) {
+  if (confirm("Delete this ambassador?")) tr.remove();
+}
+
+function addWeekColumn(weekName) {
   const theadRow = document.querySelector("#tracker-table thead tr");
   const th = document.createElement("th");
   th.className = "week-header";
-  th.innerHTML = `<span class="week-name">${weekName}</span><span class="edit-icon" onclick="editWeekName(this)">✏️</span><span class="delete-icon" onclick="deleteWeekColumn(this)">🗑️</span>`;
+  th.dataset.week = weekName;
+  th.innerHTML = `${weekName} <button class="edit-week">✏️</button> <button class="delete-week">🗑️</button>`;
+  th.querySelector(".edit-week").onclick = () => editWeek(th);
+  th.querySelector(".delete-week").onclick = () => deleteWeek(th);
   theadRow.appendChild(th);
 
   const rows = document.querySelectorAll("#tracker-table tbody tr");
   rows.forEach(row => {
-    const name = row.querySelector(".ambassador-name").textContent;
+    const name = row.firstChild.querySelector(".ambassador-name").textContent;
     const td = document.createElement("td");
-    for (let opt = 1; opt <= 5; opt++) {
-      const label = document.createTextNode(`Opt${opt}:`);
-      const btn = document.createElement("button");
-      btn.textContent = "0";
-      btn.className = "opt-btn";
-      btn.dataset.ambassador = name;
-      btn.dataset.week = weekName;
-      btn.dataset.option = opt;
-      btn.addEventListener("click", () => incrementCount(btn));
-      const resetBtn = document.createElement("button");
-      resetBtn.textContent = "\u27f3";
-      resetBtn.className = "reset-btn";
-      resetBtn.addEventListener("click", () => resetCount(btn));
-      td.appendChild(label);
-      td.appendChild(btn);
-      td.appendChild(resetBtn);
-      td.appendChild(document.createElement("br"));
-    }
+    createOptionButtons(td, name, weekName);
     row.appendChild(td);
   });
+}
+
+function editWeek(th) {
+  const oldName = th.dataset.week;
+  const newName = prompt("Edit week name:", oldName);
+  if (!newName || newName === oldName) return;
+
+  th.dataset.week = newName;
+  th.childNodes[0].nodeValue = newName + " ";
+
+  document.querySelectorAll(`[data-week="${oldName}"]`).forEach(el => {
+    el.dataset.week = newName;
+  });
+}
+
+function deleteWeek(th) {
+  const index = Array.from(th.parentNode.children).indexOf(th);
+  if (confirm("Delete this week column?")) {
+    th.remove();
+    document.querySelectorAll(`#tracker-table tbody tr`).forEach(row => {
+      row.children[index].remove();
+    });
+  }
+}
+
+document.getElementById("add-ambassador-btn").addEventListener("click", () => {
+  const name = document.getElementById("new-ambassador").value.trim();
+  if (name) {
+    addAmbassadorRow(name);
+    document.getElementById("new-ambassador").value = "";
+  }
+});
+
+document.getElementById("add-week-btn").addEventListener("click", () => {
+  const weekName = prompt("Enter week name (e.g., Week 3):");
+  if (weekName) {
+    addWeekColumn(weekName);
+  }
 });
 
 document.getElementById("save-btn").addEventListener("click", () => {
@@ -121,47 +161,10 @@ document.getElementById("save-btn").addEventListener("click", () => {
   });
 });
 
-function editAmbassadorName(icon) {
-  const span = icon.parentElement.querySelector(".ambassador-name");
-  const newName = prompt("Enter new name:", span.textContent);
-  if (newName) {
-    const oldName = span.textContent;
-    span.textContent = newName;
-    const buttons = document.querySelectorAll(`button[data-ambassador="${oldName}"]`);
-    buttons.forEach(btn => btn.dataset.ambassador = newName);
-  }
-}
-
-function deleteAmbassadorRow(icon) {
-  const row = icon.closest("tr");
-  row.remove();
-}
-
-function editWeekName(icon) {
-  const span = icon.parentElement.querySelector(".week-name");
-  const oldName = span.textContent;
-  const newName = prompt("Enter new week name:", oldName);
-  if (newName && newName !== oldName) {
-    span.textContent = newName;
-    const buttons = document.querySelectorAll(`button[data-week="${oldName}"]`);
-    buttons.forEach(btn => btn.dataset.week = newName);
-  }
-}
-
-function deleteWeekColumn(icon) {
-  const th = icon.closest("th");
-  const index = Array.from(th.parentNode.children).indexOf(th);
-  const rows = document.querySelectorAll("#tracker-table tr");
-  rows.forEach(row => {
-    if (row.children[index]) row.removeChild(row.children[index]);
-  });
-}
-
-document.getElementById("ambassador-filter").addEventListener("input", (e) => {
-  const filter = e.target.value.toLowerCase();
-  const rows = document.querySelectorAll("#tracker-table tbody tr");
-  rows.forEach(row => {
+document.getElementById("ambassador-filter").addEventListener("input", function () {
+  const value = this.value.toLowerCase();
+  document.querySelectorAll("#tracker-table tbody tr").forEach(row => {
     const name = row.querySelector(".ambassador-name").textContent.toLowerCase();
-    row.style.display = name.includes(filter) ? "" : "none";
+    row.style.display = name.includes(value) ? "" : "none";
   });
 });
