@@ -18,9 +18,17 @@
     .scrollable { overflow-x: auto; display: block; }
     #control-panel { margin-bottom: 10px; text-align: center; }
     .filter-select { margin: 4px; }
-    .week-header-container { display: flex; flex-direction: column; align-items: center; }
+    .week-header-container, .ambassador-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .actions-btns button { margin: 2px; }
     .filter-input { width: 90%; margin-top: 4px; }
-    .actions-btns button { margin-left: 5px; }
+    .ambassador-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
   </style>
 </head>
 <body>
@@ -61,10 +69,13 @@
         {% for name, weeks_data in data.items() %}
           <tr data-ambassador="{{ name }}">
             <td>
-              {{ name }}
-              <br>
-              <button onclick="renameAmbassador('{{ name }}')">✏️</button>
-              <button onclick="deleteAmbassador('{{ name }}')">🗑️</button>
+              <div class="ambassador-cell">
+                <span class="ambassador-name">{{ name }}</span>
+                <div class="actions-btns">
+                  <button onclick="renameAmbassador('{{ name }}')">✏️</button>
+                  <button onclick="deleteAmbassador('{{ name }}')">🗑️</button>
+                </div>
+              </div>
             </td>
             {% for week in weeks %}
               <td>
