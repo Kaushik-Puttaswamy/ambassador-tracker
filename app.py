@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, render_template, request, send_file, redirect, jsonify
 from flask_socketio import SocketIO, emit
 import os
@@ -12,26 +10,21 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 DATA_FILE = 'saved_data.json'
 
-
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'r') as f:
             return json.load(f)
     return {"data": {}, "weeks": []}
 
-
 def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
 
-
 store = load_data()
-
 
 @app.route('/')
 def index():
     return render_template('index.html', data=store['data'], weeks=store['weeks'])
-
 
 @app.route('/download')
 def download():
@@ -47,7 +40,6 @@ def download():
     df.to_excel(output, index=False)
     output.seek(0)
     return send_file(output, as_attachment=True, download_name='ambassador_data.xlsx', mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -69,12 +61,10 @@ def upload():
         save_data(store)
     return redirect('/')
 
-
 @app.route('/save', methods=['POST'])
 def manual_save():
     save_data(store)
     return jsonify({'status': 'saved'})
-
 
 @socketio.on('update_click')
 def update_click(payload):
@@ -93,6 +83,41 @@ def update_click(payload):
         store['weeks'].append(week)
     emit('broadcast_update', payload, broadcast=True)
 
+@socketio.on('delete_ambassador')
+def delete_ambassador(data):
+    name = data['ambassador']
+    if name in store['data']:
+        del store['data'][name]
+        emit('ambassador_deleted', {'ambassador': name}, broadcast=True)
+
+@socketio.on('delete_week')
+def delete_week(data):
+    week = data['week']
+    if week in store['weeks']:
+        store['weeks'].remove(week)
+        for ambassador in store['data']:
+            store['data'][ambassador].pop(week, None)
+        emit('week_deleted', {'week': week}, broadcast=True)
+
+@socketio.on('rename_ambassador')
+def rename_ambassador(data):
+    old_name = data['old_name']
+    new_name = data['new_name']
+    if old_name in store['data']:
+        store['data'][new_name] = store['data'].pop(old_name)
+        emit('ambassador_renamed', {'old_name': old_name, 'new_name': new_name}, broadcast=True)
+
+@socketio.on('rename_week')
+def rename_week(data):
+    old_week = data['old_week']
+    new_week = data['new_week']
+    if old_week in store['weeks']:
+        index = store['weeks'].index(old_week)
+        store['weeks'][index] = new_week
+        for ambassador in store['data']:
+            if old_week in store['data'][ambassador]:
+                store['data'][ambassador][new_week] = store['data'][ambassador].pop(old_week)
+        emit('week_renamed', {'old_week': old_week, 'new_week': new_week}, broadcast=True)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

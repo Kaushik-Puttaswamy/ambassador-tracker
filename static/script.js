@@ -41,6 +41,43 @@ socket.on("broadcast_update", (data) => {
   }
 });
 
+socket.on("ambassador_deleted", (data) => {
+  const row = document.querySelector(`tr[data-ambassador="${data.ambassador}"]`);
+  if (row) row.remove();
+});
+
+socket.on("week_deleted", (data) => {
+  const headers = document.querySelectorAll(".week-header");
+  headers.forEach((th, index) => {
+    if (th.textContent === data.week) {
+      document.querySelectorAll(`#tracker-table tr`).forEach(row => row.deleteCell(index + 1));
+      th.remove();
+    }
+  });
+});
+
+socket.on("ambassador_renamed", ({ old_name, new_name }) => {
+  const row = document.querySelector(`tr[data-ambassador="${old_name}"]`);
+  if (row) {
+    row.dataset.ambassador = new_name;
+    row.querySelector("td").textContent = new_name;
+    row.querySelectorAll("button").forEach(btn => {
+      btn.dataset.ambassador = new_name;
+    });
+  }
+});
+
+socket.on("week_renamed", ({ old_week, new_week }) => {
+  const headers = document.querySelectorAll(".week-header");
+  headers.forEach(th => {
+    if (th.textContent === old_week) th.textContent = new_week;
+  });
+
+  document.querySelectorAll(`button[data-week="${old_week}"]`).forEach(btn => {
+    btn.dataset.week = new_week;
+  });
+});
+
 document.getElementById("add-ambassador-btn").addEventListener("click", () => {
   const name = document.getElementById("new-ambassador").value.trim();
   if (!name) return;
@@ -48,6 +85,7 @@ document.getElementById("add-ambassador-btn").addEventListener("click", () => {
   const weeks = Array.from(document.querySelectorAll(".week-header")).map(th => th.textContent);
   const tbody = document.querySelector("#tracker-table tbody");
   const tr = document.createElement("tr");
+  tr.setAttribute("data-ambassador", name);
   const tdName = document.createElement("td");
   tdName.textContent = name;
   tr.appendChild(tdName);
@@ -91,7 +129,7 @@ document.getElementById("add-week-btn").addEventListener("click", () => {
 
   const rows = document.querySelectorAll("#tracker-table tbody tr");
   rows.forEach(row => {
-    const name = row.firstChild.textContent;
+    const name = row.querySelector("td").textContent;
     const td = document.createElement("td");
     for (let opt = 1; opt <= 5; opt++) {
       const label = document.createTextNode(`Opt${opt}:`);
@@ -120,3 +158,39 @@ document.getElementById("save-btn").addEventListener("click", () => {
     if (res.ok) alert("Saved successfully!");
   });
 });
+
+function deleteAmbassador(name) {
+  if (confirm(`Delete ambassador "${name}"?`)) {
+    socket.emit("delete_ambassador", { ambassador: name });
+  }
+}
+
+function deleteWeek(week) {
+  if (confirm(`Delete week "${week}"?`)) {
+    socket.emit("delete_week", { week });
+  }
+}
+
+function renameAmbassador(oldName) {
+  const newName = prompt("Enter new name for ambassador:", oldName);
+  if (newName && newName !== oldName) {
+    socket.emit("rename_ambassador", { old_name: oldName, new_name: newName });
+  }
+}
+
+function renameWeek(oldWeek) {
+  const newWeek = prompt("Enter new name for week:", oldWeek);
+  if (newWeek && newWeek !== oldWeek) {
+    socket.emit("rename_week", { old_week: oldWeek, new_week: newWeek });
+  }
+}
+
+function applyFilter(input, weekIndex) {
+  const filter = input.value.toLowerCase();
+  const rows = document.querySelectorAll("#tracker-table tbody tr");
+  rows.forEach(row => {
+    const cell = row.cells[weekIndex + 1]; // +1 because 0 is name
+    const text = cell.textContent.toLowerCase();
+    row.style.display = text.includes(filter) ? "" : "none";
+  });
+}

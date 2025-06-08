@@ -8,7 +8,7 @@
     body { font-family: Arial, sans-serif; }
     h2 { text-align: center; }
     table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    td, th { border: 1px solid #ccc; padding: 6px; text-align: center; vertical-align: top; }
     .opt-btn, .reset-btn { width: 60px; margin: 2px; }
     .reset-btn { width: 30px; background-color: #eee; }
     .green { background-color: #90ee90; }
@@ -18,6 +18,9 @@
     .scrollable { overflow-x: auto; display: block; }
     #control-panel { margin-bottom: 10px; text-align: center; }
     .filter-select { margin: 4px; }
+    .week-header-container { display: flex; flex-direction: column; align-items: center; }
+    .filter-input { width: 90%; margin-top: 4px; }
+    .actions-btns button { margin-left: 5px; }
   </style>
 </head>
 <body>
@@ -41,14 +44,28 @@
         <tr>
           <th>Ambassador</th>
           {% for week in weeks %}
-            <th class="week-header">{{ week }}</th>
+            <th class="week-header">
+              <div class="week-header-container">
+                <span>{{ week }}</span>
+                <div class="actions-btns">
+                  <button onclick="renameWeek('{{ week }}')">✏️</button>
+                  <button onclick="deleteWeek('{{ week }}')">🗑️</button>
+                </div>
+                <input class="filter-input" onkeyup="applyFilter(this, {{ loop.index0 }})" placeholder="Filter...">
+              </div>
+            </th>
           {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% for name, weeks_data in data.items() %}
-          <tr>
-            <td>{{ name }}</td>
+          <tr data-ambassador="{{ name }}">
+            <td>
+              {{ name }}
+              <br>
+              <button onclick="renameAmbassador('{{ name }}')">✏️</button>
+              <button onclick="deleteAmbassador('{{ name }}')">🗑️</button>
+            </td>
             {% for week in weeks %}
               <td>
                 {% if week in weeks_data %}
